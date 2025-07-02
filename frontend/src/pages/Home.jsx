@@ -220,6 +220,10 @@ useEffect(() => {
   <img src={userData?.assistantImage} alt="" className='h-full object-cover' />
 </div>
 
+      <div className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg mt-[30px]'>
+  <img src={userData?.assistantImage} alt="" className='h-full object-cover' />
+</div>
+
       <h1 className='text-white text-[18px] font-semibold'>I'm {userData?.assistantName}</h1>
       {!aiText && <img src={userImg} alt="" className='w-[200px]'/>}
       {aiText && <img src={aiImg} alt="" className='w-[200px]'/>}
