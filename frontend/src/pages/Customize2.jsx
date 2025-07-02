@@ -45,3 +45,46 @@ setLoading(false)
 }
 
 export default Customize2
+
+
+
+
+// Q1. What is the main purpose of Customize2?
+// Allows the user to name their assistant and finalize setup.
+// Sends the name and image to the backend.
+
+// Q2. How is assistant data submitted?
+// Using FormData, which supports file uploads.
+// Sent via a POST request with axios.
+
+// Q3. What happens when handleUpdateAssistant() runs?
+// Sends selected image and name to the backend /update API.
+// Updates the user context with the new data.
+
+// Q4. Why is withCredentials: true important here?
+// Ensures JWT cookie is sent for authentication.
+// Required to authorize the update request.
+
+// Q5. What is the role of backendImage and selectedImage?
+// backendImage is for uploaded images, selectedImage for defaults.
+// Only one of them is sent depending on the user's choice.
+
+// Q6. How is navigation handled?
+// On success, navigate("/") redirects the user to the homepage.
+// Also includes a back button to /customize.
+
+// Q7. Why use useState for assistantName and loading?
+// To manage user input and button loading state.
+// Improves user experience during async calls.
+
+// Q8. What is FormData.append() used for?
+// To attach text and files in the same request body.
+// Ideal for multipart/form-data submissions.
+
+// Q9. What visual feedback is shown during loading?
+// The button text changes to "Loading..." when submitting.
+// Also disables the button to prevent duplicate submissions.
+
+// Q10. What happens after a successful assistant update?
+// User data is updated, and the user is redirected home.
+// They can now interact with their personalized assistant.

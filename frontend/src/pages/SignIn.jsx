@@ -54,3 +54,40 @@ try {
 }
 
 export default SignIn
+
+
+
+
+
+// Q1. What is the role of the SignIn component?
+// Handles user login functionality using email and password.
+// It authenticates via backend API and updates user context.
+
+// Q2. How does the password visibility toggle work?
+// It uses useState(showPassword) and conditionally renders <IoEye/> or <IoEyeOff/>.
+// The type of input switches between password and text.
+
+// Q3. How is form submission handled?
+// The handleSignIn function is triggered on form submit.
+// It sends login data to the backend using Axios and handles loading/error states.
+
+// Q4. What happens after a successful login?
+// User data is stored in context, and the user is redirected to the homepage.
+// Also, JWT cookie is set via backend response (handled with withCredentials: true).
+
+// Q5. What if login fails?
+// Error message is extracted from backend and shown using setErr().
+// User data is reset and loading is stopped.
+
+// Q6. What does withCredentials: true do in Axios?
+// It ensures cookies (like JWT) are included in requests.
+// This allows backend session validation.
+
+// Q7. How is UI designed for the form?
+// Styled using Tailwind CSS with a blurred background image and rounded input fields.
+// Responsively centers the login form and adapts on mobile.
+
+// Q8. How is navigation handled?
+// useNavigate from react-router-dom redirects to /signup or / (home).
+// Ensures smooth transitions between routes on user actions.
+

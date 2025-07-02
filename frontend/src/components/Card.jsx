@@ -15,3 +15,29 @@ function Card({image}) {
 }
 
 export default Card
+
+
+
+// Q1. What does this Card component do?
+// Displays an image card that can be selected as the assistant's avatar.
+// Highlights the selected image visually using conditional styling.
+
+// Q2. What is userDataContext used for?
+// Provides shared state like image selection and URLs via React Context.
+// Allows state updates without prop drilling.
+
+// Q3. What happens on clicking a card?
+// It sets the clicked image as selectedImage and resets backend/frontend images.
+// This helps track user image preference.
+
+// Q4. How is dynamic styling handled?
+// Uses a template string with conditional classes for active cards.
+// If selected, extra borders and shadows are applied.
+
+// Q5. Why is object-cover used on the image?
+// Ensures the image covers the entire card without distortion.
+// Maintains visual consistency.
+
+// Q6. How does this component support personalization?
+// Lets users visually pick their assistant image.
+// Part of a customizable user experience.

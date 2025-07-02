@@ -55,3 +55,38 @@ try {
 }
 
 export default SignUp
+
+
+
+
+// Q1. What is the main functionality of the SignUp component?
+// Handles user registration by collecting name, email, and password.
+// Sends data to backend and navigates to the customization screen.
+
+// Q2. How is password visibility managed here?
+// State showPassword toggles the input type between "password" and "text".
+// Icons <IoEye/> and <IoEyeOff/> are used to toggle visibility.
+
+// Q3. How is form submission handled?
+// handleSignUp() is triggered on form submit and sends data using Axios.
+// If successful, it stores user data in context and redirects to /customize.
+
+// Q4. What happens after successful signup?
+// Backend returns the user and sets a cookie (via withCredentials:true).
+// Frontend updates context and navigates to assistant image selection.
+
+// Q5. What validation or error handling exists?
+// Backend error messages are caught and displayed using setErr().
+// Form inputs are also marked required to prevent empty submissions.
+
+// Q6. What does withCredentials: true do in this Axios call?
+// It allows cross-origin cookies (e.g., JWT) to be sent and received securely.
+// Required for authentication using HTTP-only cookies.
+
+// Q7. How is UI styling done for the form?
+// Uses Tailwind CSS with backdrop blur, rounded inputs, and gradient background.
+// Clean and responsive design improves UX.
+
+// Q8. How is navigation handled between SignUp and SignIn?
+// useNavigate() from react-router-dom redirects users based on intent.
+// Clicking the prompt moves to /signin for existing users.
