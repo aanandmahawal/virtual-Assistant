@@ -217,13 +217,8 @@ useEffect(() => {
       <button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold absolute hidden lg:block top-[20px] right-[20px]  bg-white rounded-full cursor-pointer text-[19px] ' onClick={handleLogOut}>Log Out</button>
       <button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold  bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-[19px] px-[20px] py-[10px] hidden lg:block ' onClick={()=>navigate("/customize")}>Customize your Assistant</button>
       <div className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg mt-[30px]'>
-  <img src={userData?.assistantImage} alt="" className='h-full object-cover' />
-</div>
-
-      <div className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg mt-[30px]'>
-  <img src={userData?.assistantImage} alt="" className='h-full object-cover' />
-</div>
-
+        <img src={userData?.assistantImage} alt="" className='h-full object-cover' />
+      </div>
       <h1 className='text-white text-[18px] font-semibold'>I'm {userData?.assistantName}</h1>
       {!aiText && <img src={userImg} alt="" className='w-[200px]'/>}
       {aiText && <img src={aiImg} alt="" className='w-[200px]'/>}
