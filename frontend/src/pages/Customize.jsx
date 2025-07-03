@@ -95,3 +95,52 @@ function Customize() {
 }
 
 export default Customize;
+
+
+
+
+
+// 🔹 Q1. What is the purpose of the Customize component?
+// Answer:
+// It allows users to select or upload an image to customize their virtual assistant's appearance.
+// This is the first step in personalizing the assistant experience.
+
+// 🔹 Q2. How does image selection work in this component?
+// Answer:
+// Predefined images are displayed using <Card> components, and an upload box allows image input.
+// The selected image is tracked using the selectedImage state.
+
+// 🔹 Q3. How is uploaded image preview implemented?
+// Answer:
+// The selected image file is read with URL.createObjectURL() and stored in frontendImage.
+// It’s conditionally rendered as an <img> inside the upload card.
+
+// 🔹 Q4. What is the role of inputImage.current.click()?
+// Answer:
+// It programmatically triggers the hidden file input when the upload area is clicked.
+// This provides a custom UI instead of the default file picker.
+
+// 🔹 Q5. What is the use of useRef() in this component?
+// Answer:
+// useRef() stores the reference to the hidden file input for programmatic access.
+// This enables manual triggering without relying on DOM IDs.
+
+// 🔹 Q6. How is global image state handled?
+// Answer:
+// The userDataContext provides backendImage, frontendImage, and related setters.
+// This ensures the selected image persists across routes.
+
+// 🔹 Q7. When does the “Next” button appear?
+// Answer:
+// Only when selectedImage has a value, indicating that the user has chosen or uploaded an image.
+// It conditionally renders at the bottom for clean UX.
+
+// 🔹 Q8. How would you improve UX or accessibility of this component?
+// Answer:
+// Add ARIA labels, keyboard navigation for image selection, and file validation on upload.
+// Also, add feedback for unsupported formats or file size limits.
+
+// 🔹 Q9. What styling libraries or tools are used here?
+// Answer:
+// Tailwind CSS is used for responsive design, hover effects, and utility-based styling.
+// This results in a compact yet visually appealing layout.
