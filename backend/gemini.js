@@ -58,3 +58,38 @@ return result.data.candidates[0].content.parts[0].text
 }
 
 export default geminiResponse
+
+
+
+
+// Q1. What does the geminiResponse function do?
+// It sends a user command to the Gemini API using Axios.
+// Returns a structured JSON response based on the prompt.
+
+// Q2. How is the prompt customized?
+// Includes the assistant’s name and the user’s name.
+// Personalizes the assistant’s behavior and replies.
+
+// Q3. What kind of response is expected from Gemini?
+// A JSON with fields: type, userInput, and response.
+// This structure is used to guide assistant behavior.
+
+// Q4. What types of commands does it handle?
+// Time/date/day/month, general Q&A, searches, and app openings.
+// Also includes categories like YouTube, Google, and weather.
+
+// Q5. Why is axios.post() used here?
+// To send the prompt to Gemini’s API endpoint.
+// It posts JSON data and waits for a structured response.
+
+// Q6. How is the response extracted from Gemini?
+// It accesses result.data.candidates[0].content.parts[0].text.
+// That’s where the JSON response is stored.
+
+// Q7. What is process.env.GEMINI_API_URL used for?
+// Stores the API endpoint in a secure .env file.
+// Prevents hardcoding and allows easy config changes.
+
+// Q8. How does this function affect the assistant’s behavior?
+// It defines the assistant’s logic, voice replies, and intent detection.
+// Core of how the assistant “thinks” and responds.

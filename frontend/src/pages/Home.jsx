@@ -216,8 +216,8 @@ useEffect(() => {
       </div>
       <button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold absolute hidden lg:block top-[20px] right-[20px]  bg-white rounded-full cursor-pointer text-[19px] ' onClick={handleLogOut}>Log Out</button>
       <button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold  bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-[19px] px-[20px] py-[10px] hidden lg:block ' onClick={()=>navigate("/customize")}>Customize your Assistant</button>
-      <div className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg'>
-<img src={userData?.assistantImage} alt="" className='h-full object-cover'/>
+      <div className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg mt-[30px]'>
+        <img src={userData?.assistantImage} alt="" className='h-full object-cover' />
       </div>
       <h1 className='text-white text-[18px] font-semibold'>I'm {userData?.assistantName}</h1>
       {!aiText && <img src={userImg} alt="" className='w-[200px]'/>}
@@ -230,3 +230,54 @@ useEffect(() => {
 }
 
 export default Home
+
+
+
+
+// Q1. What is the role of the Home component?
+// It serves as the main interface where the assistant listens, responds, and performs tasks via voice.
+// It integrates Web Speech API, Gemini AI, and custom commands.
+
+// Q2. How is voice input handled?
+// Using SpeechRecognition API, which listens to the user's speech.
+// It triggers logic only if the assistant's name is mentioned.
+
+// Q3. How does the assistant speak responses?
+// Through SpeechSynthesisUtterance in Hindi (hi-IN) language.
+// It reads out Gemini's response with a selected voice.
+
+// Q4. What is isSpeakingRef and isRecognizingRef used for?
+// To avoid overlap between speaking and listening phases.
+// They prevent race conditions in async voice processes.
+
+// Q5. What happens when the assistant detects a command?
+// It stops recognition, sends the command to Gemini API,
+// Processes the result, and speaks the response.
+
+// Q6. How are external actions like Google search triggered?
+// Based on Gemini's type value like google-search or youtube-play,
+// A new browser tab is opened using window.open().
+
+// Q7. Why is synth.cancel() used before speak()?
+// To stop any ongoing speech before starting a new one.
+// Prevents speech overlapping or cutting.
+
+// Q8. How is aiText and userText used?
+// userText stores the spoken input; aiText stores assistant reply.
+// Displayed with corresponding GIFs on the UI.
+
+// Q9. What happens on logout?
+// JWT cookie is cleared via /logout API,
+// User context is reset and navigates to Sign In.
+
+// Q10. How is assistant greeting done on load?
+// A greeting message is spoken when the component mounts.
+// Uses SpeechSynthesis to say “Hello [User]”.
+
+// Q11. How does Gemini know the assistant name and user name?
+// They are sent in the API call from context (userData).
+// Gemini uses these for personalized responses.
+
+// Q12. What is the purpose of the mobile hamburger menu?
+// It provides access to “Customize” and “Logout” options in mobile view.
+// Also displays assistant interaction history in scrollable view.
