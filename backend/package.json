@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
-  "author": "aanand mahawal",
+  "author": "Muskan Gupta",
   "type": "module",
   "main": "index.js",
   "scripts": {
