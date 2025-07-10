@@ -9,29 +9,39 @@ import authRouter from "./routes/auth.routes.js"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 import userRouter from "./routes/user.routes.js"
-import geminiResponse from "./gemini.js"
+import geminiResponse from "./gemini.js"  // assuming it's used somewhere
 
+const app = express()
 
-
-const app=express()
 app.use(cors({
-    origin:"https://virtual-assistant-0dz3.onrender.com",
-    credentials:true
+    origin: "https://virtual-assistant-0dz3.onrender.com",
+    credentials: true
 }))
-const port=process.env.PORT || 5050
+
+const port = process.env.PORT || 5050
+
 app.use(express.json())
 app.use(cookieParser())
-app.use("/api/auth",authRouter)
-app.use("/api/user",userRouter)
 
+// API routes
+app.use("/api/auth", authRouter)
+app.use("/api/user", userRouter)
 
-
-
-app.listen(port,()=>{
-    connectDb()
-    console.log(`server is running on port ${port}`)
+// Root route to fix "Cannot GET /"
+app.get("/", (req, res) => {
+    res.send(" Virtual Assistant Backend is Running!");
 })
 
+// Optional: Catch-all 404 handler for undefined routes
+app.use((req, res) => {
+    res.status(404).json({ error: " Route not found" });
+})
+
+// Start the server and connect DB
+app.listen(port, () => {
+    connectDb()
+    console.log(` Server is running on port ${port}`)
+})
 
 
 
