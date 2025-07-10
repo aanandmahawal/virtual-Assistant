@@ -1,47 +1,38 @@
-// cd backend               nodemon index.js
-// cd frontend              npm run dev
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
-import express from "express"
-import dotenv from "dotenv"
-dotenv.config()
-import connectDb from "./config/db.js"
-import authRouter from "./routes/auth.routes.js"
-import cors from "cors"
-import cookieParser from "cookie-parser"
-import userRouter from "./routes/user.routes.js"
-import geminiResponse from "./gemini.js"  // assuming it's used somewhere
+import connectDb from "./config/db.js";
+import authRouter from "./routes/auth.routes.js";
+import userRouter from "./routes/user.routes.js";
 
-const app = express()
+// Load environment variables from .env
+dotenv.config();
 
+// Initialize express app
+const app = express();
+const port = process.env.PORT || 8000;
+
+// Middleware to allow cross-origin requests from frontend
 app.use(cors({
-    origin: "https://virtual-assistant-0dz3.onrender.com",
-    credentials: true
-}))
+  origin: "https://virtual-assistant-0dz3.onrender.com",
+  credentials: true
+}));
 
-const port = process.env.PORT || 5050
+// JSON parser and cookie parser middleware
+app.use(express.json());
+app.use(cookieParser());
 
-app.use(express.json())
-app.use(cookieParser())
+// Route middlewares
+app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
-// API routes
-app.use("/api/auth", authRouter)
-app.use("/api/user", userRouter)
-
-// Root route to fix "Cannot GET /"
-app.get("/", (req, res) => {
-    res.send(" Virtual Assistant Backend is Running!");
-})
-
-// Optional: Catch-all 404 handler for undefined routes
-app.use((req, res) => {
-    res.status(404).json({ error: " Route not found" });
-})
-
-// Start the server and connect DB
+// Start server
 app.listen(port, () => {
-    connectDb()
-    console.log(` Server is running on port ${port}`)
-})
+  connectDb(); // Connect to MongoDB
+  console.log(` Server running on http://localhost:${port}`);
+});
 
 
 
