@@ -23,19 +23,22 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 
-// Simple health check — open /health in a browser to see the DB state.
-app.get("/health", (req, res) => {
-  const states = ["disconnected", "connected", "connecting", "disconnecting"];
-  res.json({ ok: true, db: states[app.get("mongoose_state") ?? 0] });
-});
+app.get("/health", (req, res) => res.json({ ok: true }));
 
-// Connect to the database FIRST, then start serving. A server that starts
-// before its database is a server that answers every request with timeouts.
 connectDb().then(() => {
-  const mongoose = import("mongoose").then((m) =>
-    app.set("mongoose_state", m.default.connection.readyState)
-  );
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
   });
+
+  // Render's free tier spins the instance down after ~15 idle minutes,
+  // making the next request wait ~50s for a cold boot. Pinging our own
+  // public URL every 10 minutes counts as traffic and keeps it awake.
+  // RENDER_EXTERNAL_URL is set automatically by Render.
+  const external = process.env.RENDER_EXTERNAL_URL;
+  if (external) {
+    setInterval(() => {
+      fetch(`${external}/health`).catch(() => {});
+    }, 10 * 60 * 1000);
+    console.log("Keep-alive ping enabled");
+  }
 });
