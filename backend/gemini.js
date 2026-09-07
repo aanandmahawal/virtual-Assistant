@@ -1,11 +1,36 @@
 import axios from "axios";
-import User from "./models/user.model.js"; // You'll need to import this if moved logic here
+
+// Google retires Gemini models on a schedule (1.0/1.5 gone, 2.0 gone since
+// June 2026, 2.5-flash going in Oct 2026). Instead of hardcoding one model in
+// an env URL and breaking at each retirement, we try current models in order
+// and remember the first one that works.
+const MODELS = [
+  "gemini-3.7-flash",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-2.5-flash",
+];
+let workingModel = null;
+
+// The API key: prefer a GEMINI_API_KEY env var; otherwise reuse the ?key=
+// from the old GEMINI_API_URL so existing deployments need no env change.
+const apiKey = () => {
+  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
+  const m = (process.env.GEMINI_API_URL || "").match(/[?&]key=([^&]+)/);
+  return m ? m[1] : null;
+};
+
+const endpoint = (model, key) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
 const geminiResponse = async (command, assistantName, userName) => {
-  try {
-    const apiUrl = process.env.GEMINI_API_URL;
+  const key = apiKey();
+  if (!key) {
+    console.error("Gemini: no API key found (set GEMINI_API_KEY, or keep ?key= in GEMINI_API_URL)");
+    return null;
+  }
 
-    const prompt = `You are a virtual assistant named ${assistantName} created by ${userName}. 
+  const prompt = `You are a virtual assistant named ${assistantName} created by ${userName}.
 You are not Google. You will now behave like a voice-enabled assistant.
 
 Your task is to understand the user's natural language input and respond with a JSON object like this:
@@ -42,58 +67,37 @@ Important:
 now your userInput- ${command}
 `;
 
-    const result = await axios.post(apiUrl, {
-      contents: [
-        {
-          parts: [{ text: prompt }],
-        },
-      ],
-    });
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    // Ask Google to return STRICT JSON — no markdown fences, no prose —
+    // so the controller's JSON.parse never sees garbage.
+    generationConfig: { responseMimeType: "application/json" },
+  };
 
-    return result.data.candidates[0].content.parts[0].text;
-  } catch (error) {
-    console.log("Gemini error:", error);
-    return null;
+  const candidates = workingModel
+    ? [workingModel, ...MODELS.filter((m) => m !== workingModel)]
+    : MODELS;
+
+  for (const model of candidates) {
+    try {
+      const result = await axios.post(endpoint(model, key), body);
+      if (workingModel !== model) {
+        workingModel = model;
+        console.log(`Gemini model in use: ${model}`);
+      }
+      return result.data.candidates[0].content.parts[0].text;
+    } catch (error) {
+      const status = error.response?.status;
+      const detail = error.response?.data?.error?.message || error.message;
+      console.error(`Gemini error (${model}): ${status ?? ""} ${detail}`);
+      // 404 / model-retired -> try the next model; anything else (bad key,
+      // quota, network) will fail for every model, so stop and report.
+      const retired = status === 404 || /not (found|available|supported)/i.test(detail);
+      if (!retired) return null;
+    }
   }
+  console.error("Gemini: every candidate model failed — see errors above.");
+  return null;
 };
 
 export default geminiResponse;
-
-
-
-
-
-
-
-
-// Q1. What does the geminiResponse function do?
-// It sends a user command to the Gemini API using Axios.
-// Returns a structured JSON response based on the prompt.
-
-// Q2. How is the prompt customized?
-// Includes the assistant’s name and the user’s name.
-// Personalizes the assistant’s behavior and replies.
-
-// Q3. What kind of response is expected from Gemini?
-// A JSON with fields: type, userInput, and response.
-// This structure is used to guide assistant behavior.
-
-// Q4. What types of commands does it handle?
-// Time/date/day/month, general Q&A, searches, and app openings.
-// Also includes categories like YouTube, Google, and weather.
-
-// Q5. Why is axios.post() used here?
-// To send the prompt to Gemini’s API endpoint.
-// It posts JSON data and waits for a structured response.
-
-// Q6. How is the response extracted from Gemini?
-// It accesses result.data.candidates[0].content.parts[0].text.
-// That’s where the JSON response is stored.
-
-// Q7. What is process.env.GEMINI_API_URL used for?
-// Stores the API endpoint in a secure .env file.
-// Prevents hardcoding and allows easy config changes.
-
-// Q8. How does this function affect the assistant’s behavior?
-// It defines the assistant’s logic, voice replies, and intent detection.
-// Core of how the assistant “thinks” and responds.
