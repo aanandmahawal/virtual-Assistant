@@ -1,36 +1,27 @@
 import axios from "axios";
 
-// Google retires Gemini models on a schedule (1.0/1.5 gone, 2.0 gone since
-// June 2026, 2.5-flash going in Oct 2026). Instead of hardcoding one model in
-// an env URL and breaking at each retirement, we try current models in order
-// and remember the first one that works.
-const MODELS = [
+// ── Provider strategy ───────────────────────────────────────────────
+// If GROQ_API_KEY is set, use Groq (fastest — typically well under a
+// second for this small JSON-intent task). Otherwise fall back to
+// Gemini, tuned for lowest latency (lite model first, thinking off).
+
+const GROQ_MODELS = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
+const GEMINI_MODELS = [
+  "gemini-3.1-flash-lite",   // lite = lowest latency
   "gemini-3.7-flash",
   "gemini-3.5-flash",
-  "gemini-3.1-flash-lite",
   "gemini-2.5-flash",
 ];
-let workingModel = null;
+let workingGroq = null;
+let workingGemini = null;
 
-// The API key: prefer a GEMINI_API_KEY env var; otherwise reuse the ?key=
-// from the old GEMINI_API_URL so existing deployments need no env change.
-const apiKey = () => {
+const geminiKey = () => {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
   const m = (process.env.GEMINI_API_URL || "").match(/[?&]key=([^&]+)/);
   return m ? m[1] : null;
 };
 
-const endpoint = (model, key) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-
-const geminiResponse = async (command, assistantName, userName) => {
-  const key = apiKey();
-  if (!key) {
-    console.error("Gemini: no API key found (set GEMINI_API_KEY, or keep ?key= in GEMINI_API_URL)");
-    return null;
-  }
-
-  const prompt = `You are a virtual assistant named ${assistantName} created by ${userName}.
+const buildPrompt = (command, assistantName, userName) => `You are a virtual assistant named ${assistantName} created by ${userName}.
 You are not Google. You will now behave like a voice-enabled assistant.
 
 Your task is to understand the user's natural language input and respond with a JSON object like this:
@@ -67,37 +58,83 @@ Important:
 now your userInput- ${command}
 `;
 
-  const body = {
-    contents: [{ parts: [{ text: prompt }] }],
-    // Ask Google to return STRICT JSON — no markdown fences, no prose —
-    // so the controller's JSON.parse never sees garbage.
-    generationConfig: { responseMimeType: "application/json" },
-  };
-
-  const candidates = workingModel
-    ? [workingModel, ...MODELS.filter((m) => m !== workingModel)]
-    : MODELS;
-
-  for (const model of candidates) {
+// ── Groq (OpenAI-compatible endpoint, JSON mode) ────────────────────
+const askGroq = async (prompt) => {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return null;
+  const models = workingGroq
+    ? [workingGroq, ...GROQ_MODELS.filter((m) => m !== workingGroq)]
+    : GROQ_MODELS;
+  for (const model of models) {
     try {
-      const result = await axios.post(endpoint(model, key), body);
-      if (workingModel !== model) {
-        workingModel = model;
-        console.log(`Gemini model in use: ${model}`);
+      const r = await axios.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          model,
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+          temperature: 0.3,
+        },
+        { headers: { Authorization: `Bearer ${key}` }, timeout: 20000 }
+      );
+      if (workingGroq !== model) {
+        workingGroq = model;
+        console.log(`Assistant brain: Groq ${model}`);
       }
-      return result.data.candidates[0].content.parts[0].text;
+      return r.data.choices[0].message.content;
     } catch (error) {
       const status = error.response?.status;
       const detail = error.response?.data?.error?.message || error.message;
-      console.error(`Gemini error (${model}): ${status ?? ""} ${detail}`);
-      // 404 / model-retired -> try the next model; anything else (bad key,
-      // quota, network) will fail for every model, so stop and report.
-      const retired = status === 404 || /not (found|available|supported)/i.test(detail);
-      if (!retired) return null;
+      console.error(`Groq error (${model}): ${status ?? ""} ${detail}`);
+      const retired = status === 404 || /decommission|not found/i.test(detail);
+      if (!retired) return null; // key/quota problem: Gemini fallback takes over
     }
   }
-  console.error("Gemini: every candidate model failed — see errors above.");
   return null;
+};
+
+// ── Gemini fallback (lite-first, thinking disabled where supported) ─
+const askGemini = async (prompt) => {
+  const key = geminiKey();
+  if (!key) return null;
+  const models = workingGemini
+    ? [workingGemini, ...GEMINI_MODELS.filter((m) => m !== workingGemini)]
+    : GEMINI_MODELS;
+  for (const model of models) {
+    // First try with internal "thinking" turned off (big latency win on
+    // models that accept it); if the model rejects that field, retry plain.
+    for (const cfg of [
+      { responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
+      { responseMimeType: "application/json" },
+    ]) {
+      try {
+        const r = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+          { contents: [{ parts: [{ text: prompt }] }], generationConfig: cfg },
+          { timeout: 30000 }
+        );
+        if (workingGemini !== model) {
+          workingGemini = model;
+          console.log(`Assistant brain: Gemini ${model}`);
+        }
+        return r.data.candidates[0].content.parts[0].text;
+      } catch (error) {
+        const status = error.response?.status;
+        const detail = error.response?.data?.error?.message || error.message;
+        console.error(`Gemini error (${model}): ${status ?? ""} ${detail}`);
+        if (status === 400 && /thinking/i.test(detail)) continue; // retry plain
+        const retired = status === 404 || /not (found|available|supported)/i.test(detail);
+        if (retired) break;      // next model
+        return null;             // key/quota/network: stop
+      }
+    }
+  }
+  return null;
+};
+
+const geminiResponse = async (command, assistantName, userName) => {
+  const prompt = buildPrompt(command, assistantName, userName);
+  return (await askGroq(prompt)) ?? (await askGemini(prompt));
 };
 
 export default geminiResponse;
